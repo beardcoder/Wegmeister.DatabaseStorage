@@ -11,9 +11,11 @@ namespace Wegmeister\DatabaseStorage\Finishers;
  * The Neos project - inspiring people to share!
  */
 
+use Neos\ContentRepository\Domain\Model\NodeData;
+use Neos\ContentRepository\Domain\Repository\NodeDataRepository;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Persistence\Exception\IllegalObjectTypeException;
 use Neos\Form\Core\Model\AbstractFinisher;
-use Neos\Form\Exception\FinisherException;
 
 use Wegmeister\DatabaseStorage\Domain\Model\DatabaseStorage;
 use Wegmeister\DatabaseStorage\Domain\Repository\DatabaseStorageRepository;
@@ -28,19 +30,32 @@ class DatabaseStorageFinisher extends AbstractFinisher
      * @Flow\Inject
      * @var DatabaseStorageRepository
      */
-    protected $databaseStorageRepository;
+    protected $storageRepository;
+
+    /**
+     * @Flow\Inject
+     * @var NodeDataRepository
+     */
+    protected $nodeDataRepository;
+
+    /**
+     * @var array
+     */
+    protected $excludedNodeTypes = [];
 
     /**
      * Executes this finisher
+     *
      * @see AbstractFinisher::execute()
      *
      * @return void
-     * @throws FinisherException
+     * @throws IllegalObjectTypeException
      */
     protected function executeInternal()
     {
+        $this->excludedNodeTypes = $this->parseOption('excludedNodeTypes');
         $formRuntime = $this->finisherContext->getFormRuntime();
-        $formValues = $formRuntime->getFormState()->getFormValues();
+        $formValues = $this->removeSections($formRuntime->getFormState()->getFormValues());
 
         $identifier = $this->parseOption('identifier');
         if (!$identifier) {
@@ -53,6 +68,40 @@ class DatabaseStorageFinisher extends AbstractFinisher
             ->setProperties($formValues)
             ->setDateTime(new \DateTime());
 
-        $this->databaseStorageRepository->add($dbStorage);
+        $this->storageRepository->add($dbStorage);
+    }
+
+    /**
+     * Remove sections from formValues
+     *
+     * @param $formValues
+     *
+     * @return array
+     */
+    private function removeSections($formValues): array
+    {
+        foreach ($formValues as $key => $formValue) {
+            /** @var \Neos\ContentRepository\Domain\Model\NodeData $nodeIdentifier */
+            $nodeIdentifier = $this->nodeDataRepository->findByNodeIdentifier($key)->getFirst();
+            if ($nodeIdentifier !== null && $this->isExcludedByOptions($nodeIdentifier)) {
+                unset($formValues[$key]);
+            }
+        }
+
+        return $formValues;
+    }
+
+    /**
+     * @param NodeData $nodeIdentifier
+     *
+     * @return bool
+     */
+    private function isExcludedByOptions(NodeData $nodeIdentifier): bool
+    {
+        if (in_array($nodeIdentifier->getNodeType()->getName(), $this->excludedNodeTypes)) {
+            return true;
+        }
+
+        return false;
     }
 }
