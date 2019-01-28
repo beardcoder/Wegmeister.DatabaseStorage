@@ -30,7 +30,7 @@ renderables:
 
 finishers:
   -
-    identifier: 'Wegmeister.Database:DatabaseStorage'
+    identifier: 'Wegmeister.Database:DatabaseStorageFinisher'
     options:
       # The identifier is used to group your data in the database.
       # You should avoid using the same identifier twice or your data could become a little messed up.
@@ -38,7 +38,7 @@ finishers:
 ```
 
 
-## Add DatabaseStorage using the new Neos Form-Builder
+### Add DatabaseStorage using the new Neos Form-Builder
 
 You can also use the DatabseStorage with the new [Neos.Form.Builder](https://github.com/neos/form-builder).
 You should be able to simply add DatabaseStorage as a finisher to your formular.
@@ -46,9 +46,20 @@ You should be able to simply add DatabaseStorage as a finisher to your formular.
 Don't forget to set an (unique) `identifier`!
 
 
-## ToDos
+## Available settings
 
-- [ ] Add translations
-- [ ] Add the ability to remove a single entry
-- [x] Fix missing icons in Neos 4.0
-- [x] Update package to work with Neos 4.0
+The following settings are available and can be overridden by your Settings.yaml:
+
+```yaml
+
+Wegmeister:
+  DatabaseStorage:
+    # Creator name of the exported files
+    creator: 'die wegmeister gmbh'
+    # Title for the exported files
+    title: 'Database Export'
+    # Subject for the exported files
+    subject: 'Database Export'
+    # DateTime format if the datetime is included in the export
+    datetimeFormat: 'Y-m-d H:i:s'
+```
